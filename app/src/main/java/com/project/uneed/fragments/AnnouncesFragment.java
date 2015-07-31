@@ -64,7 +64,7 @@ public class AnnouncesFragment extends Fragment {
      */
     public void addItens(int quantity) {
         for (int i = 0; i < quantity; i++) {
-            mDataset.add(new Announces("Lorem ipsum dolor siamet", SessionUtil.currentUser.getFirstName(),
+            mDataset.add(new Announces("Lorem ipsum dolor siamet", SessionUtil.currentUser.getFullName(),
                     BitmapFactory.decodeResource(getResources(), resources[i]),
                     "Lorem ipsum dolor siamet lorem ipsum ipsum"));
         }

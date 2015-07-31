@@ -15,9 +15,12 @@
     <string name="app_id">1620541361548352</string>
     <string name="title_activity_spalsh_screen">SpalshScreen</string>
 
+    <string name="service">serviceLogin</string>
+    <string name="fullname">fullname</string>
     <string name="accesstoken">accessTokenId</string>
     <string name="aplication_id">applicationId</string>
     <string name="user_id">userId</string>
+    <string name="account_name">accountName</string>
 
     <string name="menu_home">Início</string>
     <string name="menu_new__anuncio">Novo anuncio</string>

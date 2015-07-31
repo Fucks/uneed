@@ -7,113 +7,59 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Toast;
 
 import com.facebook.AccessToken;
 import com.facebook.AccessTokenTracker;
 import com.facebook.CallbackManager;
-import com.facebook.FacebookCallback;
 import com.facebook.FacebookSdk;
 import com.facebook.Profile;
-import com.facebook.login.LoginManager;
-import com.facebook.login.LoginResult;
+import com.facebook.ProfileTracker;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.Scopes;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.Scope;
+import com.google.android.gms.plus.Plus;
+import com.google.android.gms.plus.model.people.Person;
 import com.project.uneed.R;
 import com.project.uneed.model.User;
 import com.project.uneed.util.ConnectionDetector;
 import com.project.uneed.util.SessionUtil;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ConcurrentModificationException;
 import java.util.concurrent.ExecutionException;
 
-public class SplashScreenActivity extends ActionBarActivity {
+public class SplashScreenActivity extends ActionBarActivity implements
+        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     private final int SPLASH_TIMEOUT = 3000;
+
+    /* Request code used to invoke sign in user interactions. */
+    private static final int RC_SIGN_IN = 0;
+    /* Client used to interact with Google APIs. */
+    private GoogleApiClient mGoogleApiClient;
+
+    private AccessTokenTracker accessTokenTracker;
+    private ProfileTracker profileTracker;
+
+    private User mUser;
 
     /**
      *
      */
     public void initializeUser() {
-        if (!FacebookSdk.isInitialized() && SessionUtil.currentUser == null) {
-
-            FacebookSdk.sdkInitialize(this);
-            SessionUtil.printLog("Facebook SDK Initialized!");
-            CallbackManager.Factory.create();
-
-            updateWithToken(AccessToken.getCurrentAccessToken());
-        } else {
-            SessionUtil.printLog("Facebook SDK Already initialized!");
-            Intent mIntent = new Intent(SplashScreenActivity.this, MainActivity.class);
-
-            startActivity(mIntent);
-            // make sure splash screen activity is gone
-            SplashScreenActivity.this.finish();
-        }
-    }
-
-    /**
-     * @param currentAccessToken
-     */
-    private void updateWithToken(AccessToken currentAccessToken) {
-
-        SessionUtil.printLog("Access Token update method! Status : token = " + currentAccessToken);
-
-        SessionUtil.printLog("Getting shared access token");
         SharedPreferences mSharedPref = SplashScreenActivity.this.getSharedPreferences(getString(R.string.accesstoken), Context.MODE_PRIVATE);
+        mUser = new User();
 
-        String mSharedAccessToken = mSharedPref.getString(getString(R.string.accesstoken), "");
-        String mSharedApplicationId = mSharedPref.getString(getString(R.string.aplication_id), "");
-        String mSharedUserId = mSharedPref.getString(getString(R.string.user_id), "");
-
-        if (currentAccessToken != null || !mSharedAccessToken.isEmpty()) {
-
-            SessionUtil.printLog("AccessToken is null, getting token by shared preferences");
-
-            AccessToken mToken = new AccessToken(mSharedAccessToken, mSharedApplicationId, mSharedUserId, null, null, null, null, null);
-            AccessToken.setCurrentAccessToken(mToken);
-
-            Intent mIntent = new Intent(SplashScreenActivity.this, MainActivity.class);
-
-            Profile.fetchProfileForCurrentAccessToken();
-            Profile profile = Profile.getCurrentProfile();
-
-            SessionUtil.printLog("Facebook profile status : " + profile);
-
-            User user = new User();
-
-            try {
-                user.setPhoto(new DownloadImageProfile().execute(profile).get());
-            } catch (ConcurrentModificationException | ExecutionException | InterruptedException e) {
-            }
-
-            try {
-
-                user.setFirstName(profile.getFirstName());
-                user.setLastName(profile.getLastName());
-
-                SessionUtil.currentUser = user;
-
-                startActivity(mIntent);
-
-                // make sure splash screen activity is gone
-                SplashScreenActivity.this.finish();
-            } catch (Exception e) {
-                SessionUtil.printLog("Error loading user");
-                Toast.makeText(this, e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
-            }
-        } else {
-            SessionUtil.printLog("Not have access token, go to EnterActivity");
-
-            Intent i = new Intent(SplashScreenActivity.this, EnterActivity.class);
-            startActivity(i);
-
-            // make sure splash screen activity is gone
-            SplashScreenActivity.this.finish();
-        }
+        mUser.setLoginService(mSharedPref.getString(getString(R.string.service), ""));
+        mUser.setUserId(mSharedPref.getString(getString(R.string.user_id), ""));
+        mUser.setApplicationId(mSharedPref.getString(getString(R.string.aplication_id), ""));
+        mUser.setAccessToken(mSharedPref.getString(getString(R.string.accesstoken), ""));
+        mUser.setFullName(mSharedPref.getString(getString(R.string.fullname), ""));
     }
 
     @Override
@@ -122,14 +68,84 @@ public class SplashScreenActivity extends ActionBarActivity {
         // our layout xml
         setContentView(R.layout.activity_spalsh_screen);
 
-        SessionUtil.printLog("SplashScreen initialized!");
-
-        new Handler().postDelayed(new Runnable() {
+        new Thread(new Runnable() {
             @Override
             public void run() {
+                mGoogleApiClient = new GoogleApiClient.Builder(SplashScreenActivity.this)
+                        .addConnectionCallbacks(SplashScreenActivity.this)
+                        .addOnConnectionFailedListener(SplashScreenActivity.this)
+                        .addApi(Plus.API)
+                        .addScope(new Scope(Scopes.PROFILE))
+                        .build();
+
+                mGoogleApiClient.connect();
+                SessionUtil.printLog("GoogleAPI initialize!");
+
+                FacebookSdk.sdkInitialize(SplashScreenActivity.this);
+                CallbackManager.Factory.create();
+                SessionUtil.printLog("FacebookSDK initialize!");
+
+                SessionUtil.printLog("SplashScreen initialized!");
+
+                initilizeCallBacks();
+
                 initializeUser();
+
+                if (mUser.getLoginService().isEmpty()) {
+                    SessionUtil.printLog("Not have access token, go to EnterActivity");
+
+                    Intent i = new Intent(SplashScreenActivity.this, EnterActivity.class);
+                    startActivity(i);
+
+                    // make sure splash screen activity is gone
+                    SplashScreenActivity.this.finish();
+                } else if(mUser.getLoginService().equals("FACEBOOK")){
+                    AccessToken accessToken = new AccessToken(mUser.getAccessToken(), mUser.getApplicationId(), mUser.getUserId(), null, null, null, null,  null);
+                    AccessToken.setCurrentAccessToken(accessToken);
+                    Profile.fetchProfileForCurrentAccessToken();
+                }
             }
-        }, SPLASH_TIMEOUT);
+        }).start();
+    }
+
+    /**
+     *
+     */
+    public void initilizeCallBacks() {
+        accessTokenTracker = new AccessTokenTracker() {
+            @Override
+            protected void onCurrentAccessTokenChanged(AccessToken oldToken, AccessToken newToken) {
+                SessionUtil.printLog("Access token changed! oldToken : " + oldToken + " newToken : " + newToken);
+            }
+        };
+
+        profileTracker = new ProfileTracker() {
+            @Override
+            protected void onCurrentProfileChanged(Profile oldProfile, Profile newProfile) {
+                SessionUtil.printLog("Profile changed! oldToken : " + oldProfile + " newToken : " + newProfile);
+                Profile profile = Profile.getCurrentProfile();
+
+                SessionUtil.printLog("Facebook profile status : " + profile);
+
+                try {
+                    mUser.setPhoto(new DownloadImageProfile().execute(new URL(profile.getProfilePictureUri(90,90).toString())).get());
+                } catch (ConcurrentModificationException | ExecutionException | InterruptedException e) {
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                }
+
+                Intent mIntent = new Intent(SplashScreenActivity.this, MainActivity.class);
+                SessionUtil.currentUser = mUser;
+
+                startActivity(mIntent);
+
+                // make sure splash screen activity is gone
+                SplashScreenActivity.this.finish();
+            }
+        };
+
+        accessTokenTracker.startTracking();
+        profileTracker.startTracking();
     }
 
 
@@ -155,19 +171,66 @@ public class SplashScreenActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    /**
+     *
+     */
+    @Override
+    protected void onStart() {
+        super.onStart();
+    }
+
+    /**
+     * Google Callbacks
+     */
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        Person profile = Plus.PeopleApi.getCurrentPerson(mGoogleApiClient);
+
+        try {
+            mUser.setPhoto(new DownloadImageProfile().execute(new URL(profile.getImage().getUrl())).get());
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+
+
+        Intent mIntent = new Intent(SplashScreenActivity.this, MainActivity.class);
+        SessionUtil.currentUser = mUser;
+
+        startActivity(mIntent);
+
+        // make sure splash screen activity is gone
+        SplashScreenActivity.this.finish();
+
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+
+    }
+
 
     /**
      *
      */
-    private class DownloadImageProfile extends AsyncTask<Profile, Void, Bitmap> {
+    private class DownloadImageProfile extends AsyncTask<URL, Void, Bitmap> {
 
         @Override
-        protected Bitmap doInBackground(Profile... params) {
+        protected Bitmap doInBackground(URL... params) {
 
             try {
                 SessionUtil.printLog("Facebook User profile image downloading!");
                 if (new ConnectionDetector(getApplicationContext()).isConnectingToInternet()) {
-                    URL img_value = new URL(params[0].getProfilePictureUri(90, 90).toString());
+                    URL img_value = params[0];
                     return BitmapFactory.decodeStream(img_value.openConnection().getInputStream());
                 } else {
                     SessionUtil.printLog("No Internet conection detected!");
@@ -181,5 +244,4 @@ public class SplashScreenActivity extends ActionBarActivity {
             return null;
         }
     }
-
 }

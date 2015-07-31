@@ -28,7 +28,14 @@
             <Button
                 android:id="@+id/login_button"
                 style="@style/com_facebook_button"
-                android:text="@string/button_register_face"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/button_enter_bounds"
+                android:height="@dimen/button_enter_bounds"
+                android:text="@string/button_register_face" />
+
+            <com.google.android.gms.common.SignInButton
+                android:id="@+id/sign_in_button"
+                android:layout_marginTop="16dp"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/button_enter_bounds"
                 android:height="@dimen/button_enter_bounds" />
@@ -36,14 +43,14 @@
         </LinearLayout>
 
         <LinearLayout
-            android:visibility="invisible"
             android:id="@+id/progress_content"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center|end"
             android:layout_marginLeft="@dimen/border_enter_buttons"
             android:layout_marginRight="@dimen/border_enter_buttons"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:visibility="invisible">
 
             <ImageView
                 android:layout_width="match_parent"
@@ -52,8 +59,9 @@
                 android:src="@drawable/uneed_logo" />
 
             <ProgressBar
+                style="@android:style/Widget.Holo.Light.ProgressBar.Small"
+                android:id="@+id/progress_enter"
                 android:layout_gravity="center"
-                style="@android:style/Widget.Holo.Light.ProgressBar.Large"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
 

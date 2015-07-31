@@ -167,7 +167,7 @@ public class DrawerAdapter extends RecyclerView.Adapter<DrawerAdapter.ViewHolder
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            holder.Name.setText(currentUser.getFirstName() + " " + currentUser.getLastName());
+            holder.Name.setText(currentUser.getFullName());
             holder.email.setText("");
         }
 
