@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ColorPrimary">#ff685b</color>
+    <color name="ColorPrimaryDark">#F0414D</color>
+
+    <color name="drawerBackground">#FFFFFF</color>
+    <color name="drawerSelection">#ff685b</color>
+
+    <color name="drawerTextItem">#bb000000</color>
+    <color name="drawerIconItem">#54747474</color>
+
+    <color name="announceItemTitle">#212121</color>
+    <color name="announceItemDesc">#424242</color>
+</resources>

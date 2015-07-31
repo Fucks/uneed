@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/drawer_row_container"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/drawe_item_height"
+    android:background="?android:activatedBackgroundIndicator"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginLeft="@dimen/drawe_item_icon_margin"
+        android:layout_marginRight="@dimen/drawe_item_icon_margin"
+        android:orientation="horizontal"
+        android:paddingBottom="@dimen/drawe_item_padding"
+        android:paddingTop="@dimen/drawe_item_padding">
+
+        <ImageView
+            android:id="@+id/rowIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center_vertical|left"
+            android:layout_marginRight="@dimen/drawe_item_icon_margin"
+            android:src="@mipmap/ic_launcher" />
+
+        <TextView
+            android:id="@+id/rowText"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center_vertical"
+            android:paddingLeft="@dimen/drawe_item_icon_margin"
+            android:text="Medium Text"
+            android:textColor="@color/drawerTextItem"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="?android:attr/selectableItemBackground" />
+</FrameLayout>
